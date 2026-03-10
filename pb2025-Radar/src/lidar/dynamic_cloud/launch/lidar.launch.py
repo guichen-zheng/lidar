@@ -7,6 +7,7 @@ from launch.actions import TimerAction, Shutdown
 from launch import LaunchDescription
 from launch.actions import IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
+from ament_index_python.packages import get_package_share_directory
 import launch
 
 def dump_params(param_file_path, node_name):
@@ -70,7 +71,6 @@ def generate_launch_description():
             emulate_tty=True,
             on_exit=Shutdown(),
         )
-        
     
     # 创建节点描述
     localization_node = get_localization_node('localization', 'tdt_radar::Localization')
@@ -79,16 +79,24 @@ def generate_launch_description():
     kalman_filter_node = get_kalman_filter_node('kalman_filter', 'tdt_radar::KalmanFilter')
     # foxglove_node = get_foxglove_node('foxglove_bridge', 'foxglove_bridge::FoxgloveBridge')
 
+    static_tf = Node(
+        package='tf2_ros',
+        executable='static_transform_publisher',
+        arguments=['0', '0', '0', '0', '0', '0', '1', 'rm_frame', 'livox_frame'],
+        name='static_tf_livox'
+    )
+
     # 创建节点容器
     lidar_detector = get_container(
                                     localization_node,
                                     dynamic_cloud_node,
                                     cluster_node,
-                                    kalman_filter_node
+                                    kalman_filter_node,
                                     # foxglove_node
                                    )
-    # cmd = launch.actions.ExecuteProcess(cmd=['ros2', 'bag', 'play', 'config/merged_bag/merged_bag_0.db3', '--loop', '--start-offset', '250'])
 
+    # cmd = launch.actions.ExecuteProcess(cmd=['ros2', 'bag', 'play', 'config/merged_bag/merged_bag_0.db3', '--loop', '--start-offset', '250'])
     return LaunchDescription([
-            lidar_detector
+            static_tf,
+            lidar_detector,
             ])
