@@ -177,13 +177,13 @@ colcon build --packages-select 功能包名称
 ```
 
 已实现VSCode下使用gdbserver或lldb-server进行程序调试的配置文件，按下F5即可使用，需安装相应插件
-## 测试
+## 测试()
     
 ```bash
 ros2 launch tdt_vision run_rosbag.launch.py #通过rosbag启动相机
 ros2 launch dynamic_cloud lidar.launch.py #启动激光雷达识别
 ros2 run debug_map debug_map #启动地图可视化
-ros2 launch livox_ros2_driver livox_lidar_launch.py #启动Livox驱动
+ros2 launch livox_ros2_avia livox_lidar_launch.py #启动Livox驱动
 ```
 测试ros2bag下载
 [百度网盘](https://pan.baidu.com/s/1ogRvs3v1OMCVUbAlUsOGQA?pwd=52rm)

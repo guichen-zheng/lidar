@@ -22,7 +22,7 @@ def generate_launch_description():
             name='rosbag_player_node',
             parameters=[ {'rosbag_file': 
                 # '/home/tdt/rosbag/ros2bags/radar_record0531_2032_54/merged_bag/merged_bag_0.db3'
-                '/home/shenxw/Rosbag/适应性录像第二把/merged_bag/merged_bag_0.db3'
+                '/home/guichen/Documents/lidar_ws/pb2025-Radar/merged_bag_0.db3'
                 }],
             extra_arguments=[{'use_intra_process_comms': True}]
         )  

@@ -121,29 +121,36 @@ private:
 
         // 进行点云配准
         std::cout << "--- pcl::GICP ---" << std::endl;
-        boost::shared_ptr<pcl::GeneralizedIterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ>> gicp(new pcl::GeneralizedIterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ>());
-        transform = align(gicp, target_cloud_, source_cloud);
+
+        boost::shared_ptr<pcl::GeneralizedIterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ>> gicp(
+            new pcl::GeneralizedIterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ>());
+
+        // 防护1：确保 source_cloud 有效
+        if (!source_cloud || source_cloud->empty() || source_cloud->size() < 30) {
+            RCLCPP_WARN(this->get_logger(), 
+                        "[防护] source_cloud 无效或点太少 (%zu)，跳过本次配准",
+                        source_cloud ? source_cloud->size() : 0);
+            return;  // 直接跳过，不执行 align
         }
-        publishTF(transform);
-    }
 
-    pcl::Registration<pcl::PointXYZ, pcl::PointXYZ>::Matrix4 align(boost::shared_ptr<pcl::Registration<pcl::PointXYZ, pcl::PointXYZ>> registration, const pcl::PointCloud<pcl::PointXYZ>::Ptr& target_cloud, const pcl::PointCloud<pcl::PointXYZ>::Ptr& source_cloud) {
-        registration->setInputTarget(target_cloud);
-        registration->setInputSource(source_cloud);
+        gicp->setInputTarget(target_cloud_);
+        gicp->setInputSource(source_cloud);
+
         pcl::PointCloud<pcl::PointXYZ>::Ptr aligned(new pcl::PointCloud<pcl::PointXYZ>());
-        auto t1 = std::chrono::system_clock::now();
-        registration->align(*aligned);
-        auto t2 = std::chrono::system_clock::now();
-        // std::cout << "calib time   : " << std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count() << "[msec]" << std::endl;
-        RCLCPP_WARN(this->get_logger(), "calib result : %f", registration->getFitnessScore());
+        gicp->align(*aligned);
 
-        if(registration->getFitnessScore()<0.1){
-        has_aligned_ = true;}
+        RCLCPP_WARN(this->get_logger(), "GICP fitness score: %f", gicp->getFitnessScore());
 
-        //打印变换矩阵
-        return registration->getFinalTransformation();
+        if (gicp->getFitnessScore() < 0.1) {
+            has_aligned_ = true;
+            RCLCPP_INFO(this->get_logger(), "=== GICP 配准成功！已锁定地图坐标 ===");
+        }
+
+        transform = gicp->getFinalTransformation();
     }
 
+    publishTF(transform);
+}
     void publishTF(const Eigen::Matrix4f& transform) {
 
         geometry_msgs::msg::TransformStamped transform_stamped;
